@@ -36,7 +36,7 @@ public class CryptoCoinRepository {
         coinDao = CryptoCoinDatabase.getInstance(context).getCoinDao();
     }
 
-    public LiveData<Resource<List<CryptoCoin>>> getCoinsApi(final String currencyUnit) {
+    public LiveData<Resource<List<CryptoCoin>>> getCoinsApi(final String currencyUnit, final String filterName, final boolean shouldFetch) {
         return new NetworkBoundResource<List<CryptoCoin>, CryptoCoinResponse>(AppExecutors.getInstance()) {
 
             @Override
@@ -65,13 +65,13 @@ public class CryptoCoinRepository {
 
             @Override
             protected boolean shouldFetch(@Nullable List<CryptoCoin> data) {
-                return true;
+                return shouldFetch;
             }
 
             @NonNull
             @Override
             protected LiveData<List<CryptoCoin>> loadFromDb() {
-                return coinDao.getCoins();
+                return coinDao.getCoinsFilteredByName(filterName);
             }
 
             @NonNull

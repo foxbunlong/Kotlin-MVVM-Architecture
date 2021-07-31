@@ -37,18 +37,22 @@ public class CryptoCoinListViewModel extends AndroidViewModel {
         return coins;
     }
 
-    public void getCoinsApi(String currencyUnit) {
+    public void getCoinsApi(String currencyUnit, String filterName) {
         if (!isPerformingQuery) {
             this.currencyUnit = currencyUnit;
-            executeGetData();
+            executeGetData(filterName, true);
         }
     }
 
-    private void executeGetData() {
+    public void filterCoins(String filterName) {
+        executeGetData(filterName, false);
+    }
+
+    private void executeGetData(String filterName, boolean shouldFetch) {
         requestStartTime = System.currentTimeMillis();
         cancelRequest = false;
         isPerformingQuery = true;
-        final LiveData<Resource<List<CryptoCoin>>> repositorySource = coinRepository.getCoinsApi(currencyUnit);
+        final LiveData<Resource<List<CryptoCoin>>> repositorySource = coinRepository.getCoinsApi(currencyUnit, filterName, shouldFetch);
         coins.addSource(repositorySource, listResource -> {
             if (!cancelRequest) {
                 if (listResource != null) {

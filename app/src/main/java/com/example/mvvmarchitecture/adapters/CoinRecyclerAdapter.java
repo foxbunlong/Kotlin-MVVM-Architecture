@@ -20,8 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class CoinRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements
-        ListPreloader.PreloadModelProvider<String>
-{
+        ListPreloader.PreloadModelProvider<String> {
 
     private List<CryptoCoin> mCoins;
     private RequestManager requestManager;
@@ -39,14 +38,13 @@ public class CoinRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
-        ((CoinViewHolder)viewHolder).onBind(mCoins.get(i));
+        ((CoinViewHolder) viewHolder).onBind(mCoins.get(i));
     }
 
-    private void clearList(){
-        if(mCoins == null){
+    private void clearList() {
+        if (mCoins == null) {
             mCoins = new ArrayList<>();
-        }
-        else{
+        } else {
             mCoins.clear();
         }
         notifyDataSetChanged();
@@ -54,22 +52,26 @@ public class CoinRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemCount() {
-        if(mCoins != null){
+        if (mCoins != null) {
             return mCoins.size();
         }
         return 0;
     }
 
-    public void setCoins(List<CryptoCoin> coins){
+    public void setCoins(List<CryptoCoin> coins) {
         mCoins = coins;
         notifyDataSetChanged();
+    }
+
+    public List<CryptoCoin> getCoins() {
+        return mCoins;
     }
 
     @NonNull
     @Override
     public List<String> getPreloadItems(int position) {
         String url = mCoins.get(position).getIcon();
-        if(TextUtils.isEmpty(url)){
+        if (TextUtils.isEmpty(url)) {
             return Collections.emptyList();
         }
         return Collections.singletonList(url);

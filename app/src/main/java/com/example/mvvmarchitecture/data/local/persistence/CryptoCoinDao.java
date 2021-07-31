@@ -22,8 +22,8 @@ public interface CryptoCoinDao {
             "WHERE base = :base")
     void updateCoin(String base, String buy_price, String counter, String icon, String name, String sell_price);
 
-    @Query("SELECT * FROM coins")
-    LiveData<List<CryptoCoin>> getCoins();
+    @Query("SELECT * FROM coins WHERE name LIKE '%' || :filterName || '%'")
+    LiveData<List<CryptoCoin>> getCoinsFilteredByName(String filterName);
 
 }
 

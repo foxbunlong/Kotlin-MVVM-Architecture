@@ -4,10 +4,14 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.annotation.Nullable
+import androidx.appcompat.widget.AppCompatEditText
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,9 +43,14 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var rvCoins: RecyclerView
     private lateinit var lnHeader: LinearLayoutCompat
+    private lateinit var lnSearch: LinearLayoutCompat
     private lateinit var cpbCounter: CircularProgressBar
     private lateinit var tvCounter: AppCompatTextView
+    private lateinit var imgSearch: AppCompatImageView
+    private lateinit var etSearch: AppCompatEditText
     private var mAdapter: CoinRecyclerAdapter? = null
+
+    private var filterName = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,11 +59,15 @@ class MainActivity : AppCompatActivity() {
 
         rvCoins = findViewById(R.id.rvCoins)
         lnHeader = findViewById(R.id.lnHeader)
+        lnSearch = findViewById(R.id.lnSearch)
         cpbCounter = findViewById(R.id.cpbCounter)
         tvCounter = findViewById(R.id.tvCounter)
+        imgSearch = findViewById(R.id.imgSearch)
+        etSearch = findViewById(R.id.etSearch)
 
         mViewModel = ViewModelProviders.of(this).get(CryptoCoinListViewModel::class.java)
         initRecyclerView()
+        setupUIEvents()
         subscribeObservers()
         startRealtimeUpdate()
     }
@@ -83,6 +96,18 @@ class MainActivity : AppCompatActivity() {
 
         rvCoins.layoutManager = LinearLayoutManager(this)
         rvCoins.adapter = mAdapter
+    }
+
+    private fun setupUIEvents() {
+        lnSearch.visibility = View.GONE
+        imgSearch.setOnClickListener {
+            lnSearch.visibility = View.VISIBLE
+        }
+
+        etSearch.addTextChangedListener { text ->
+            filterName = text.toString()
+            filterWithRealtimeUpdate()
+        }
     }
 
     private fun subscribeObservers() {
@@ -119,13 +144,15 @@ class MainActivity : AppCompatActivity() {
                                     mAdapter!!.setCoins(listResource.data)
 
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        var countNumber = 30f
+                                        var countNumber =
+                                            Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
 
                                         TimerUtils.secondTickerFlow()
                                             .collect {
                                                 // Every second
                                                 if (countNumber > 0) {
-                                                    cpbCounter.progressMax = 30F
+                                                    cpbCounter.progressMax =
+                                                        Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
                                                     cpbCounter.progress = countNumber
                                                     tvCounter.text = "${countNumber.toInt()}"
                                                     countNumber--
@@ -144,7 +171,16 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
                 .collect {
-                    mViewModel!!.getCoinsApi("USD")
+                    mViewModel!!.getCoinsApi("USD", filterName)
+                }
+        }
+    }
+
+    private fun filterWithRealtimeUpdate() {
+        CoroutineScope(Dispatchers.Main).launch {
+            TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
+                .collect {
+                    mViewModel!!.filterCoins(filterName)
                 }
         }
     }

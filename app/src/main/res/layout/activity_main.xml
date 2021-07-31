@@ -32,6 +32,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1" />
+
         <RelativeLayout
             android:layout_width="48dp"
             android:layout_height="48dp">
@@ -53,7 +58,7 @@
                 android:layout_height="48dp"
                 app:cpb_background_progressbar_color="@android:color/transparent"
                 app:cpb_background_progressbar_width="5dp"
-                app:cpb_progress="5"
+                app:cpb_progress="10"
                 app:cpb_progress_direction="to_right"
                 app:cpb_progress_max="10"
                 app:cpb_progressbar_color="@color/white"
@@ -61,6 +66,48 @@
                 app:cpb_round_border="false" />
         </RelativeLayout>
 
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:gravity="right"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imgSearch"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_search" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/lnSearch"
+        android:layout_width="0dp"
+        android:layout_height="58dp"
+        android:background="@drawable/bg_round_corner_bottom"
+        android:elevation="0dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_round_corner_18_all"
+            android:paddingLeft="16dp"
+            android:paddingTop="8dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="8dp"
+            android:textColor="@color/white"
+            android:textCursorDrawable="@null"
+            android:textSize="16sp" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
