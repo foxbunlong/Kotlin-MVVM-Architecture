@@ -14,7 +14,7 @@ import com.example.mvvmarchitecture.data.local.models.CryptoCoin;
 public class CoinViewHolder extends RecyclerView.ViewHolder {
 
     ImageView imgIcon;
-    TextView tvName;
+    TextView tvName, tvBuyPrice, tvSellPrice;
     RequestManager requestManager;
 
     public CoinViewHolder(@NonNull View itemView,
@@ -24,6 +24,8 @@ public class CoinViewHolder extends RecyclerView.ViewHolder {
         this.requestManager = requestManager;
         imgIcon = itemView.findViewById(R.id.imgIcon);
         tvName = itemView.findViewById(R.id.tvName);
+        tvBuyPrice = itemView.findViewById(R.id.tvBuyPrice);
+        tvSellPrice = itemView.findViewById(R.id.tvSellPrice);
 
     }
 
@@ -33,6 +35,8 @@ public class CoinViewHolder extends RecyclerView.ViewHolder {
                 .load(coin.getIcon())
                 .into(imgIcon);
 
-        tvName.setText(coin.getName());
+        tvName.setText(coin.getName() + " (" + coin.getBase() + ")");
+        tvBuyPrice.setText(coin.getBuy_price());
+        tvSellPrice.setText(coin.getSell_price());
     }
 }

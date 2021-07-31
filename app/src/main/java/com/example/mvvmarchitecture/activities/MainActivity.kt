@@ -1,16 +1,15 @@
 package com.example.mvvmarchitecture.activities
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.annotation.Nullable
-import androidx.appcompat.widget.AppCompatEditText
-import androidx.appcompat.widget.AppCompatImageView
-import androidx.appcompat.widget.AppCompatTextView
-import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.appcompat.widget.*
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -48,9 +47,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvCounter: AppCompatTextView
     private lateinit var imgSearch: AppCompatImageView
     private lateinit var etSearch: AppCompatEditText
+    private lateinit var btnClose: AppCompatButton
     private var mAdapter: CoinRecyclerAdapter? = null
 
     private var filterName = ""
+    private var mJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         tvCounter = findViewById(R.id.tvCounter)
         imgSearch = findViewById(R.id.imgSearch)
         etSearch = findViewById(R.id.etSearch)
+        btnClose = findViewById(R.id.btnClose)
 
         mViewModel = ViewModelProviders.of(this).get(CryptoCoinListViewModel::class.java)
         initRecyclerView()
@@ -102,10 +104,20 @@ class MainActivity : AppCompatActivity() {
         lnSearch.visibility = View.GONE
         imgSearch.setOnClickListener {
             lnSearch.visibility = View.VISIBLE
+            etSearch.requestFocus()
+            AppUtils.showKeyboard(this, etSearch)
         }
 
         etSearch.addTextChangedListener { text ->
             filterName = text.toString()
+            filterWithRealtimeUpdate()
+        }
+
+        btnClose.setOnClickListener {
+            lnSearch.visibility = View.GONE
+            AppUtils.hideKeyboard(this, etSearch)
+            etSearch.setText("")
+            filterName = ""
             filterWithRealtimeUpdate()
         }
     }
@@ -143,7 +155,10 @@ class MainActivity : AppCompatActivity() {
                                     )
                                     mAdapter!!.setCoins(listResource.data)
 
-                                    CoroutineScope(Dispatchers.Main).launch {
+                                    if (mJob != null && !mJob!!.isCancelled) {
+                                        mJob!!.cancel()
+                                    }
+                                    mJob = CoroutineScope(Dispatchers.Main).launch {
                                         var countNumber =
                                             Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
 
@@ -177,12 +192,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun filterWithRealtimeUpdate() {
-        CoroutineScope(Dispatchers.Main).launch {
-            TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
-                .collect {
-                    mViewModel!!.filterCoins(filterName)
-                }
-        }
+        mViewModel!!.filterCoins(filterName)
     }
 
     override fun onBackPressed() {

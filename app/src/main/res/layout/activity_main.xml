@@ -86,7 +86,7 @@
         android:id="@+id/lnSearch"
         android:layout_width="0dp"
         android:layout_height="58dp"
-        android:background="@drawable/bg_round_corner_bottom"
+        android:background="@drawable/bg_round_corner_bottom_below"
         android:elevation="0dp"
         android:gravity="center"
         android:orientation="horizontal"
@@ -98,9 +98,12 @@
 
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/etSearch"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:background="@drawable/bg_round_corner_18_all"
+            android:hint="Search..."
+            android:inputType="text"
             android:paddingLeft="16dp"
             android:paddingTop="8dp"
             android:paddingRight="16dp"
@@ -108,6 +111,16 @@
             android:textColor="@color/white"
             android:textCursorDrawable="@null"
             android:textSize="16sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:text="Close"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
