@@ -2,9 +2,12 @@ package com.example.mvvmarchitecture.activities
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.Nullable
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,12 +16,21 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.util.ViewPreloadSizeProvider
+import com.example.mvvmarchitecture.Config
 import com.example.mvvmarchitecture.R
 import com.example.mvvmarchitecture.adapters.CoinRecyclerAdapter
 import com.example.mvvmarchitecture.data.local.helpers.Resource
 import com.example.mvvmarchitecture.data.local.models.CryptoCoin
+import com.example.mvvmarchitecture.utils.AppUtils
+import com.example.mvvmarchitecture.utils.TimerUtils
 import com.example.mvvmarchitecture.viewmodels.CryptoCoinListViewModel
+import com.mikhaellopez.circularprogressbar.CircularProgressBar
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
@@ -26,18 +38,25 @@ class MainActivity : AppCompatActivity() {
     private var mViewModel: CryptoCoinListViewModel? = null
 
     private lateinit var rvCoins: RecyclerView
+    private lateinit var lnHeader: LinearLayoutCompat
+    private lateinit var cpbCounter: CircularProgressBar
+    private lateinit var tvCounter: AppCompatTextView
     private var mAdapter: CoinRecyclerAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppUtils.showFullScreen(this@MainActivity)
         setContentView(R.layout.activity_main)
 
         rvCoins = findViewById(R.id.rvCoins)
+        lnHeader = findViewById(R.id.lnHeader)
+        cpbCounter = findViewById(R.id.cpbCounter)
+        tvCounter = findViewById(R.id.tvCounter)
 
         mViewModel = ViewModelProviders.of(this).get(CryptoCoinListViewModel::class.java)
         initRecyclerView()
         subscribeObservers()
-        mViewModel!!.getCoinsApi("USD")
+        startRealtimeUpdate()
     }
 
     private fun initGlide(): RequestManager {
@@ -48,6 +67,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun initRecyclerView() {
         mAdapter = CoinRecyclerAdapter(initGlide())
+
+        rvCoins.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (rvCoins.computeVerticalScrollOffset() <= 300) {
+                    lnHeader.alpha = 1f - (rvCoins.computeVerticalScrollOffset() / 300f) + 0.2f
+                } else {
+                    lnHeader.alpha = (0.2f)
+                }
+
+            }
+        })
+
         rvCoins.layoutManager = LinearLayoutManager(this)
         rvCoins.adapter = mAdapter
     }
@@ -84,12 +117,36 @@ class MainActivity : AppCompatActivity() {
                                         "onChanged: status: SUCCESS, #coins: " + listResource.data.size
                                     )
                                     mAdapter!!.setCoins(listResource.data)
+
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        var countNumber = 30f
+
+                                        TimerUtils.secondTickerFlow()
+                                            .collect {
+                                                // Every second
+                                                if (countNumber > 0) {
+                                                    cpbCounter.progressMax = 30F
+                                                    cpbCounter.progress = countNumber
+                                                    tvCounter.text = "${countNumber.toInt()}"
+                                                    countNumber--
+                                                }
+                                            }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             })
+    }
+
+    private fun startRealtimeUpdate() {
+        CoroutineScope(Dispatchers.Main).launch {
+            TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
+                .collect {
+                    mViewModel!!.getCoinsApi("USD")
+                }
+        }
     }
 
     override fun onBackPressed() {
