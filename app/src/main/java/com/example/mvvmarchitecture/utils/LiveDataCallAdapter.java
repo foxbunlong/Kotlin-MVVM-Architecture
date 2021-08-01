@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData;
 import com.example.mvvmarchitecture.data.remote.responses.ApiResponse;
 
 import java.lang.reflect.Type;
+
 import retrofit2.Call;
 import retrofit2.CallAdapter;
 import retrofit2.Callback;

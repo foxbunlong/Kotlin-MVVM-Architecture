@@ -1,37 +1,28 @@
 package com.example.mvvmarchitecture.activities
 
-import android.content.Context
-import android.content.res.Configuration
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.view.View
-import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.annotation.Nullable
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.*
 import androidx.core.widget.addTextChangedListener
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.example.mvvmarchitecture.Config
 import com.example.mvvmarchitecture.R
 import com.example.mvvmarchitecture.adapters.CoinRecyclerAdapter
 import com.example.mvvmarchitecture.data.local.helpers.Resource
-import com.example.mvvmarchitecture.data.local.models.CryptoCoin
 import com.example.mvvmarchitecture.utils.AppUtils
-import com.example.mvvmarchitecture.utils.TimerUtils
+import com.example.mvvmarchitecture.utils.DialogUtils
 import com.example.mvvmarchitecture.viewmodels.CryptoCoinListViewModel
 import com.mikhaellopez.circularprogressbar.CircularProgressBar
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -51,20 +42,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnClose: AppCompatButton
     private var mAdapter: CoinRecyclerAdapter? = null
 
-    private var filterName = ""
-    private var mJob: Job? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppUtils.showFullScreen(this@MainActivity)
         setContentView(R.layout.activity_main)
 
-        mViewModel = ViewModelProviders.of(this).get(CryptoCoinListViewModel::class.java)
-        setupUI()
-        initRecyclerView()
-        setupUIEvents()
-        subscribeObservers()
-        startRealtimeUpdate()
+        if (mViewModel == null) {
+            mViewModel = ViewModelProviders.of(this).get(CryptoCoinListViewModel::class.java)
+            setupUI()
+            initRecyclerView()
+            setupUIEvents()
+            subscribeObservers()
+            startRealtimeUpdate()
+        }
     }
 
     private fun initGlide(): RequestManager {
@@ -113,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         etSearch.addTextChangedListener { text ->
-            filterName = text.toString()
+            mViewModel!!.filterName = text.toString()
             filterWithRealtimeUpdate()
         }
 
@@ -121,15 +111,15 @@ class MainActivity : AppCompatActivity() {
             lnSearch.visibility = View.GONE
             AppUtils.hideKeyboard(this, etSearch)
             etSearch.setText("")
-            filterName = ""
+            mViewModel!!.filterName = ""
             filterWithRealtimeUpdate()
         }
     }
 
     private fun subscribeObservers() {
         mViewModel!!.coins
-            .observe(this, object : Observer<Resource<List<CryptoCoin>>> {
-                override fun onChanged(@Nullable listResource: Resource<List<CryptoCoin>>) {
+            .observe(this,
+                { listResource ->
                     if (listResource != null) {
                         Log.d(TAG, "onChanged: status: " + listResource.status)
                         if (listResource.data != null) {
@@ -158,54 +148,36 @@ class MainActivity : AppCompatActivity() {
                                         "onChanged: status: SUCCESS, #coins: " + listResource.data.size
                                     )
                                     mAdapter!!.setCoins(listResource.data)
+
+                                    mViewModel!!.startCounter(object: CryptoCoinListViewModel.CoinUpdateListener {
+                                        override fun onTimerUpdated() {
+                                            cpbCounter.progressMax =
+                                                Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
+                                            cpbCounter.progress = mViewModel!!.countNumber
+                                            tvCounter.text = "${mViewModel!!.countNumber.toInt()}"
+                                        }
+                                    })
                                 }
                             }
                         }
                     }
-                }
-            })
+                })
+
+        mViewModel!!.isLoading.observe(this, { isLoading ->
+            if (isLoading) {
+                DialogUtils.showLoadingDialog(this)
+            } else {
+                DialogUtils.dismissLoadingDialog()
+            }
+        })
     }
 
     private fun startRealtimeUpdate() {
-        if (!mViewModel!!.isLocked) {
-            CoroutineScope(Dispatchers.Main).launch {
-                TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
-                    .onStart {
-                        mViewModel!!.isLocked = true
-                    }
-                    .collect {
-                        mViewModel!!.getCoinsApi("USD", filterName)
-                    }
-            }
-
-            mViewModel!!.countNumber = (Config.UPDATE_ROUTINE_PERIOD / 1000).toFloat()
-
-            if (mJob != null && !mJob!!.isCancelled) {
-                mJob!!.cancel()
-            }
-            mJob = CoroutineScope(Dispatchers.Main).launch {
-
-                TimerUtils.secondTickerFlow()
-                    .collect {
-                        // Every second
-                        Log.d("AAAAA", mViewModel!!.countNumber.toString())
-                        if (mViewModel!!.countNumber >= 0) {
-                            runOnUiThread {
-                                cpbCounter.progressMax =
-                                    Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
-                                cpbCounter.progress = mViewModel!!.countNumber
-                                tvCounter.text = "${mViewModel!!.countNumber.toInt()}"
-                                mViewModel!!.countNumber--
-                            }
-
-                        }
-                    }
-            }
-        }
+        mViewModel!!.startRealtimeUpdate()
     }
 
     private fun filterWithRealtimeUpdate() {
-        mViewModel!!.filterCoins(filterName)
+        mViewModel!!.filterCoins(mViewModel!!.filterName)
     }
 
     override fun onBackPressed() {

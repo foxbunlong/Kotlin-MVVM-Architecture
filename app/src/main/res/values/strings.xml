@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MVVM Architecture</string>
+
+    <!-- Loading dialog -->
+    <string name="loading_title">Đang tải...</string>
+    <string name="loading_content">Vui lòng chờ trong giây lát</string>
 </resources>

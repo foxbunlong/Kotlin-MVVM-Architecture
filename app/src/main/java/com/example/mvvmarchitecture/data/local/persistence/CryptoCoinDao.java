@@ -1,6 +1,5 @@
 package com.example.mvvmarchitecture.data.local.persistence;
 
-import static androidx.room.OnConflictStrategy.IGNORE;
 import static androidx.room.OnConflictStrategy.REPLACE;
 
 import androidx.lifecycle.LiveData;

@@ -1,9 +1,8 @@
 package com.example.mvvmarchitecture.utils
 
-import android.util.Log
-import kotlin.time.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlin.time.ExperimentalTime
 
 class TimerUtils {
 

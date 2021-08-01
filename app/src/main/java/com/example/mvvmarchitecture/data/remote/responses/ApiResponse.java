@@ -1,6 +1,7 @@
 package com.example.mvvmarchitecture.data.remote.responses;
 
 import java.io.IOException;
+
 import retrofit2.Response;
 
 public class ApiResponse<T> {
