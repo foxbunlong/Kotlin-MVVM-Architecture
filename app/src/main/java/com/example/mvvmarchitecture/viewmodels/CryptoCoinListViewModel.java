@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.mvvmarchitecture.Config;
 import com.example.mvvmarchitecture.data.local.helpers.Resource;
 import com.example.mvvmarchitecture.data.local.models.CryptoCoin;
 import com.example.mvvmarchitecture.data.remote.CryptoCoinRepository;
@@ -28,9 +29,28 @@ public class CryptoCoinListViewModel extends AndroidViewModel {
     private boolean cancelRequest;
     private long requestStartTime;
 
+    private boolean isLocked = false;
+    private float countNumber = Config.UPDATE_ROUTINE_PERIOD / 1000;
+
     public CryptoCoinListViewModel(@NonNull Application application) {
         super(application);
         coinRepository = CryptoCoinRepository.getInstance(application);
+    }
+
+    public boolean isLocked() {
+        return isLocked;
+    }
+
+    public void setLocked(boolean locked) {
+        isLocked = locked;
+    }
+
+    public float getCountNumber() {
+        return countNumber;
+    }
+
+    public void setCountNumber(float countNumber) {
+        this.countNumber = countNumber;
     }
 
     public LiveData<Resource<List<CryptoCoin>>> getCoins() {
@@ -40,6 +60,7 @@ public class CryptoCoinListViewModel extends AndroidViewModel {
     public void getCoinsApi(String currencyUnit, String filterName) {
         if (!isPerformingQuery) {
             this.currencyUnit = currencyUnit;
+            countNumber = (Config.UPDATE_ROUTINE_PERIOD / 1000);
             executeGetData(filterName, true);
         }
     }

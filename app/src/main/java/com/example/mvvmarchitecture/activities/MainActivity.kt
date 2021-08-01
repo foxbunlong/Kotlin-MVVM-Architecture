@@ -1,6 +1,7 @@
 package com.example.mvvmarchitecture.activities
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -58,16 +59,8 @@ class MainActivity : AppCompatActivity() {
         AppUtils.showFullScreen(this@MainActivity)
         setContentView(R.layout.activity_main)
 
-        rvCoins = findViewById(R.id.rvCoins)
-        lnHeader = findViewById(R.id.lnHeader)
-        lnSearch = findViewById(R.id.lnSearch)
-        cpbCounter = findViewById(R.id.cpbCounter)
-        tvCounter = findViewById(R.id.tvCounter)
-        imgSearch = findViewById(R.id.imgSearch)
-        etSearch = findViewById(R.id.etSearch)
-        btnClose = findViewById(R.id.btnClose)
-
         mViewModel = ViewModelProviders.of(this).get(CryptoCoinListViewModel::class.java)
+        setupUI()
         initRecyclerView()
         setupUIEvents()
         subscribeObservers()
@@ -98,6 +91,17 @@ class MainActivity : AppCompatActivity() {
 
         rvCoins.layoutManager = LinearLayoutManager(this)
         rvCoins.adapter = mAdapter
+    }
+
+    private fun setupUI() {
+        rvCoins = findViewById(R.id.rvCoins)
+        lnHeader = findViewById(R.id.lnHeader)
+        lnSearch = findViewById(R.id.lnSearch)
+        cpbCounter = findViewById(R.id.cpbCounter)
+        tvCounter = findViewById(R.id.tvCounter)
+        imgSearch = findViewById(R.id.imgSearch)
+        etSearch = findViewById(R.id.etSearch)
+        btnClose = findViewById(R.id.btnClose)
     }
 
     private fun setupUIEvents() {
@@ -154,26 +158,6 @@ class MainActivity : AppCompatActivity() {
                                         "onChanged: status: SUCCESS, #coins: " + listResource.data.size
                                     )
                                     mAdapter!!.setCoins(listResource.data)
-
-                                    if (mJob != null && !mJob!!.isCancelled) {
-                                        mJob!!.cancel()
-                                    }
-                                    mJob = CoroutineScope(Dispatchers.Main).launch {
-                                        var countNumber =
-                                            Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
-
-                                        TimerUtils.secondTickerFlow()
-                                            .collect {
-                                                // Every second
-                                                if (countNumber > 0) {
-                                                    cpbCounter.progressMax =
-                                                        Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
-                                                    cpbCounter.progress = countNumber
-                                                    tvCounter.text = "${countNumber.toInt()}"
-                                                    countNumber--
-                                                }
-                                            }
-                                    }
                                 }
                             }
                         }
@@ -183,11 +167,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRealtimeUpdate() {
-        CoroutineScope(Dispatchers.Main).launch {
-            TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
-                .collect {
-                    mViewModel!!.getCoinsApi("USD", filterName)
-                }
+        if (!mViewModel!!.isLocked) {
+            CoroutineScope(Dispatchers.Main).launch {
+                TimerUtils.tickerFlow(Config.UPDATE_ROUTINE_PERIOD, 0)
+                    .onStart {
+                        mViewModel!!.isLocked = true
+                    }
+                    .collect {
+                        mViewModel!!.getCoinsApi("USD", filterName)
+                    }
+            }
+
+            mViewModel!!.countNumber = (Config.UPDATE_ROUTINE_PERIOD / 1000).toFloat()
+
+            if (mJob != null && !mJob!!.isCancelled) {
+                mJob!!.cancel()
+            }
+            mJob = CoroutineScope(Dispatchers.Main).launch {
+
+                TimerUtils.secondTickerFlow()
+                    .collect {
+                        // Every second
+                        Log.d("AAAAA", mViewModel!!.countNumber.toString())
+                        if (mViewModel!!.countNumber >= 0) {
+                            runOnUiThread {
+                                cpbCounter.progressMax =
+                                    Config.UPDATE_ROUTINE_PERIOD.toFloat() / 1000
+                                cpbCounter.progress = mViewModel!!.countNumber
+                                tvCounter.text = "${mViewModel!!.countNumber.toInt()}"
+                                mViewModel!!.countNumber--
+                            }
+
+                        }
+                    }
+            }
         }
     }
 
