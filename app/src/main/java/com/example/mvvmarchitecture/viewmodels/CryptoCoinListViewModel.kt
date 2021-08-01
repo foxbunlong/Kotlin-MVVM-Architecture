@@ -10,12 +10,9 @@ import com.example.mvvmarchitecture.data.local.helpers.Resource
 import com.example.mvvmarchitecture.data.local.models.CryptoCoin
 import com.example.mvvmarchitecture.data.remote.CryptoCoinRepository
 import com.example.mvvmarchitecture.utils.TimerUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
 class CryptoCoinListViewModel(application: Application) : AndroidViewModel(application) {
@@ -129,10 +126,11 @@ class CryptoCoinListViewModel(application: Application) : AndroidViewModel(appli
             TimerUtils.secondTickerFlow()
                 .collect {
                     // Every second
-                    Log.d("AAAAA", countNumber.toString())
                     if (countNumber >= 0) {
                         callback.onTimerUpdated()
                         countNumber--
+                    } else {
+                        this.cancel()
                     }
                 }
         }
