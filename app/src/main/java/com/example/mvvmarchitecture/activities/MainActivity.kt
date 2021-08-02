@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imgSearch: AppCompatImageView
     private lateinit var etSearch: AppCompatEditText
     private lateinit var btnClose: AppCompatButton
-    private var mAdapter: CoinRecyclerAdapter? = null
+    var mAdapter: CoinRecyclerAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
